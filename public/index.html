@@ -305,7 +305,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Quiver Interview Platform</h1>
+            <h1>🏦 BCA Service Ambassador</h1>
             <p>Sistem Analisis Wawancara Kandidat</p>
         </div>
 
@@ -524,10 +524,18 @@
             document.querySelector('.upload-section').style.display = 'none';
             
             try {
-                // Update status
-                document.getElementById('processStatus').textContent = 'Mengirim video untuk analisis...';
+                // For demo purposes, we'll ask user to input transcript
+                // In production, this would be extracted from video
+                const transcript = await getTranscriptFromUser();
                 
-                // Call API endpoint
+                if (!transcript) {
+                    throw new Error('No transcript provided');
+                }
+                
+                // Update status
+                document.getElementById('processStatus').textContent = 'Menganalisis transkrip wawancara...';
+                
+                // Call API endpoint with actual transcript
                 const response = await fetch('/api/analyze', {
                     method: 'POST',
                     headers: {
@@ -535,12 +543,13 @@
                     },
                     body: JSON.stringify({
                         fileName: selectedFile.name,
-                        videoData: 'base64_encoded_video_here' // In production, encode the video
+                        transcript: transcript
                     })
                 });
 
                 if (!response.ok) {
-                    throw new Error('Analysis failed');
+                    const error = await response.json();
+                    throw new Error(error.details || 'Analysis failed');
                 }
 
                 const result = await response.json();
@@ -553,10 +562,74 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                showError('Gagal menganalisis video. Silakan coba lagi.');
+                showError('Error: ' + error.message);
                 document.getElementById('processingSection').style.display = 'none';
                 document.querySelector('.upload-section').style.display = 'block';
             }
+        }
+        
+        async function getTranscriptFromUser() {
+            // Create modal for transcript input
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 15px; max-width: 800px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <h2 style="margin-bottom: 20px; color: #005BAA;">Input Transkrip Wawancara</h2>
+                    <p style="margin-bottom: 15px; color: #666;">
+                        Karena ekstraksi audio dari video memerlukan server processing yang kompleks, 
+                        silakan input transkrip wawancara secara manual untuk analisis:
+                    </p>
+                    <textarea id="transcriptInput" style="width: 100%; height: 300px; padding: 15px; border: 2px solid #005BAA; border-radius: 10px; font-size: 14px;" 
+                        placeholder="Contoh:
+Pewawancara: Selamat pagi, bisa perkenalkan diri Anda?
+Kandidat: Selamat pagi, nama saya John Doe, saya lulusan S1 Ekonomi...
+
+Pewawancara: Mengapa Anda tertarik bekerja di BCA?
+Kandidat: Saya tertarik karena BCA merupakan bank terkemuka...
+
+(Lanjutkan dengan transkrip lengkap wawancara)"></textarea>
+                    <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                        <button onclick="this.closest('.modal-container').remove()" 
+                            style="padding: 10px 20px; border: 2px solid #ccc; background: white; border-radius: 8px; cursor: pointer;">
+                            Cancel
+                        </button>
+                        <button id="submitTranscript" 
+                            style="padding: 10px 20px; background: #005BAA; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            Analyze Transcript
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            modal.className = 'modal-container';
+            document.body.appendChild(modal);
+            
+            return new Promise((resolve) => {
+                document.getElementById('submitTranscript').onclick = () => {
+                    const transcript = document.getElementById('transcriptInput').value.trim();
+                    modal.remove();
+                    resolve(transcript);
+                };
+                
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                        resolve(null);
+                    }
+                };
+            });
         }
 
         function showResults(data) {
