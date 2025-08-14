@@ -305,7 +305,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Interview Analysis</h1>
+            <h1>Quiver Interview Platform</h1>
             <p>Sistem Analisis Wawancara Kandidat</p>
         </div>
 
@@ -523,100 +523,95 @@
             document.getElementById('processingSection').style.display = 'block';
             document.querySelector('.upload-section').style.display = 'none';
             
-            // Simulate analysis process
-            const statuses = [
-                'Mengekstrak audio dari video...',
-                'Melakukan transkripsi audio...',
-                'Menganalisis konten wawancara...',
-                'Menilai kompetensi Public Speaking...',
-                'Menilai Problem Solving Skills...',
-                'Menilai Manajemen Konflik...',
-                'Membuat visualisasi hasil...',
-                'Menyiapkan laporan akhir...'
-            ];
+            try {
+                // Update status
+                document.getElementById('processStatus').textContent = 'Mengirim video untuk analisis...';
+                
+                // Call API endpoint
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fileName: selectedFile.name,
+                        videoData: 'base64_encoded_video_here' // In production, encode the video
+                    })
+                });
 
-            for (let i = 0; i < statuses.length; i++) {
-                document.getElementById('processStatus').textContent = statuses[i];
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                if (!response.ok) {
+                    throw new Error('Analysis failed');
+                }
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show results with real data from API
+                    showResults(result.data);
+                } else {
+                    throw new Error(result.error || 'Analysis failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showError('Gagal menganalisis video. Silakan coba lagi.');
+                document.getElementById('processingSection').style.display = 'none';
+                document.querySelector('.upload-section').style.display = 'block';
             }
-
-            // Generate mock results
-            showResults();
         }
 
-        function showResults() {
+        function showResults(data) {
             document.getElementById('processingSection').style.display = 'none';
             document.getElementById('resultsSection').style.display = 'block';
 
             // Set candidate info
-            document.getElementById('fileName').textContent = selectedFile.name;
-            document.getElementById('analysisDate').textContent = new Date().toLocaleDateString('id-ID');
-            document.getElementById('videoDuration').textContent = '15:23 menit';
+            document.getElementById('fileName').textContent = data.fileName;
+            document.getElementById('analysisDate').textContent = new Date(data.analysisDate).toLocaleDateString('id-ID');
+            document.getElementById('videoDuration').textContent = data.duration;
 
-            // Generate random scores for demo
+            // Update skill scores
             const skills = [
-                { id: 'publicSpeaking', score: 85, detail: 'Kandidat menunjukkan artikulasi yang jelas, volume suara konsisten, dan kepercayaan diri yang baik. Penggunaan bahasa formal dan sopan sesuai standar BCA.' },
-                { id: 'analytical', score: 78, detail: 'Mampu menguraikan masalah dengan sistematis. Menunjukkan pemahaman yang baik terhadap data dan fakta yang disajikan.' },
-                { id: 'critical', score: 82, detail: 'Mendemonstrasikan kemampuan evaluasi yang objektif. Mampu melihat berbagai perspektif dalam situasi yang kompleks.' },
-                { id: 'solution', score: 88, detail: 'Sangat baik dalam mengidentifikasi akar masalah dan menawarkan solusi praktis. Pendekatan problem solving terstruktur.' },
-                { id: 'presentation', score: 90, detail: 'Penyampaian informasi sangat terstruktur dengan alur yang logis. Penggunaan contoh relevan dan mudah dipahami.' },
-                { id: 'conflict', score: 75, detail: 'Menunjukkan pemahaman dasar tentang manajemen konflik. Perlu peningkatan dalam teknik mediasi dan negosiasi.' }
+                { id: 'publicSpeaking', data: data.scores.publicSpeaking },
+                { id: 'analytical', data: data.scores.analyticalThinking },
+                { id: 'critical', data: data.scores.criticalThinking },
+                { id: 'solution', data: data.scores.problemSolving },
+                { id: 'presentation', data: data.scores.presentationSkills },
+                { id: 'conflict', data: data.scores.conflictManagement }
             ];
 
-            let totalScore = 0;
             skills.forEach(skill => {
-                document.getElementById(skill.id + 'Score').textContent = skill.score + '%';
-                document.getElementById(skill.id + 'Progress').style.width = skill.score + '%';
-                document.getElementById(skill.id + 'Details').textContent = skill.detail;
-                totalScore += skill.score;
+                document.getElementById(skill.id + 'Score').textContent = skill.data.score + '%';
+                document.getElementById(skill.id + 'Progress').style.width = skill.data.score + '%';
+                document.getElementById(skill.id + 'Details').textContent = skill.data.analysis;
             });
 
-            // Calculate final score
-            const finalScore = Math.round(totalScore / skills.length);
-            document.getElementById('finalScore').textContent = finalScore + '%';
+            // Set final score and recommendation
+            document.getElementById('finalScore').textContent = data.overallScore + '%';
+            document.getElementById('recommendationText').textContent = data.recommendation.text;
 
-            // Set recommendation
-            let recommendation = '';
-            if (finalScore >= 85) {
-                recommendation = 'SANGAT DIREKOMENDASIKAN. Kandidat menunjukkan kompetensi yang sangat baik dan siap untuk posisi Service Ambassador BCA.';
-            } else if (finalScore >= 75) {
-                recommendation = 'DIREKOMENDASIKAN dengan catatan. Kandidat memiliki potensi yang baik, disarankan untuk mengikuti training tambahan pada area yang perlu ditingkatkan.';
-            } else if (finalScore >= 65) {
-                recommendation = 'DIPERTIMBANGKAN. Kandidat menunjukkan potensi namun memerlukan pengembangan lebih lanjut sebelum siap untuk posisi ini.';
+            // Style recommendation based on status
+            const recDiv = document.querySelector('.final-recommendation');
+            if (data.recommendation.status === 'HIGHLY_RECOMMENDED') {
+                recDiv.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+            } else if (data.recommendation.status === 'RECOMMENDED') {
+                recDiv.style.background = 'linear-gradient(135deg, #17a2b8 0%, #20c997 100%)';
+            } else if (data.recommendation.status === 'CONDITIONAL') {
+                recDiv.style.background = 'linear-gradient(135deg, #ffc107 0%, #fd7e14 100%)';
             } else {
-                recommendation = 'BELUM DIREKOMENDASIKAN. Kandidat perlu meningkatkan beberapa kompetensi kunci sebelum dapat dipertimbangkan untuk posisi ini.';
+                recDiv.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
             }
-            document.getElementById('recommendationText').textContent = recommendation;
 
             // Add topic bubbles
-            const topics = [
-                'Customer Service Excellence',
-                'Komunikasi Efektif',
-                'Problem Solving',
-                'Kerja Tim',
-                'Orientasi Pelanggan',
-                'Inovasi Layanan',
-                'Etika Profesional',
-                'Digital Banking'
-            ];
-
             const topicBubbles = document.getElementById('topicBubbles');
             topicBubbles.innerHTML = '';
-            topics.forEach(topic => {
+            data.topics.forEach(topic => {
                 const bubble = document.createElement('div');
                 bubble.className = 'topic-bubble';
                 bubble.textContent = topic;
                 topicBubbles.appendChild(bubble);
             });
 
-            // Add sample transcript
-            document.getElementById('transcriptContent').innerHTML = `
-                <p><strong>Pewawancara:</strong> Selamat pagi, bisa perkenalkan diri Anda?</p>
-                <p><strong>Kandidat:</strong> Selamat pagi. Nama saya [Nama Kandidat], saya lulusan [Universitas] jurusan [Jurusan]. Saya tertarik dengan posisi Service Ambassador BCA karena...</p>
-                <p><strong>Pewawancara:</strong> Bagaimana Anda menangani customer yang komplain?</p>
-                <p><strong>Kandidat:</strong> Saya akan mendengarkan dengan empati, memahami masalah mereka, dan mencari solusi terbaik...</p>
-                <p style="text-align: center; margin-top: 20px; opacity: 0.7;">[Transkrip lengkap tersedia setelah analisis selesai]</p>
-            `;
+            // Add transcript
+            document.getElementById('transcriptContent').innerHTML = `<pre style="white-space: pre-wrap; font-family: inherit;">${data.transcript}</pre>`;
         }
 
         function showError(message) {

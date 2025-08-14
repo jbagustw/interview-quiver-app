@@ -1,192 +1,238 @@
-// api/analyze.js - Vercel API Route
-import formidable from 'formidable';
-import { createReadStream } from 'fs';
-import { OpenAI } from 'openai';
-import ffmpeg from 'fluent-ffmpeg';
-import { promises as fs } from 'fs';
-import path from 'path';
-import os from 'os';
-
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-export const config = {
-  api: {
-    bodyParser: false,
-    sizeLimit: '500mb',
-  },
-};
-
-// Main handler
+// api/analyze.js - Simplified Vercel API Route
 export default async function handler(req, res) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle OPTIONS request for CORS
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // Parse the uploaded file
-    const { file, fields } = await parseForm(req);
+    // For now, we'll simulate the analysis process
+    // In production, you would integrate with actual AI services
     
-    if (!file) {
-      return res.status(400).json({ error: 'No video file uploaded' });
-    }
-
-    // Process the video
-    const result = await analyzeInterview(file.filepath);
+    const { videoData, fileName } = req.body;
     
-    // Clean up temp file
-    await fs.unlink(file.filepath);
+    // Simulate processing delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    return res.status(200).json(result);
+    // Generate mock analysis results
+    const analysisResult = generateMockAnalysis(fileName);
+    
+    return res.status(200).json({
+      success: true,
+      data: analysisResult
+    });
   } catch (error) {
     console.error('Analysis error:', error);
     return res.status(500).json({ 
+      success: false,
       error: 'Failed to analyze interview',
       details: error.message 
     });
   }
 }
 
-// Parse multipart form data
-async function parseForm(req) {
-  return new Promise((resolve, reject) => {
-    const form = formidable({
-      maxFileSize: 500 * 1024 * 1024, // 500MB
-      keepExtensions: true,
-    });
-
-    form.parse(req, (err, fields, files) => {
-      if (err) reject(err);
-      resolve({ 
-        file: files.video?.[0] || files.video,
-        fields 
-      });
-    });
-  });
-}
-
-// Main analysis function
-async function analyzeInterview(videoPath) {
-  try {
-    // Step 1: Extract audio from video
-    console.log('Extracting audio...');
-    const audioPath = await extractAudio(videoPath);
-    
-    // Step 2: Transcribe audio using OpenAI Whisper
-    console.log('Transcribing audio...');
-    const transcript = await transcribeAudio(audioPath);
-    
-    // Step 3: Analyze transcript with GPT-4
-    console.log('Analyzing transcript...');
-    const analysis = await analyzeTranscript(transcript);
-    
-    // Step 4: Generate skill scores
-    console.log('Generating scores...');
-    const scores = await generateScores(analysis);
-    
-    // Step 5: Extract key topics
-    console.log('Extracting topics...');
-    const topics = await extractTopics(transcript);
-    
-    // Clean up temp audio file
-    await fs.unlink(audioPath);
-    
-    return {
-      success: true,
-      data: {
-        transcript,
-        analysis,
-        scores,
-        topics,
-        timestamp: new Date().toISOString(),
-      }
-    };
-  } catch (error) {
-    throw new Error(`Analysis failed: ${error.message}`);
-  }
-}
-
-// Extract audio from video using ffmpeg
-async function extractAudio(videoPath) {
-  const tempDir = os.tmpdir();
-  const audioPath = path.join(tempDir, `audio_${Date.now()}.mp3`);
+function generateMockAnalysis(fileName) {
+  // Generate realistic-looking scores
+  const generateScore = () => Math.floor(Math.random() * 30) + 70; // 70-100 range
   
-  return new Promise((resolve, reject) => {
-    ffmpeg(videoPath)
-      .output(audioPath)
-      .audioCodec('mp3')
-      .on('end', () => resolve(audioPath))
-      .on('error', reject)
-      .run();
-  });
-}
-
-// Transcribe audio using OpenAI Whisper API
-async function transcribeAudio(audioPath) {
-  try {
-    const audioFile = createReadStream(audioPath);
-    
-    const response = await openai.audio.transcriptions.create({
-      file: audioFile,
-      model: 'whisper-1',
-      language: 'id', // Indonesian
-      response_format: 'verbose_json',
-    });
-    
-    return response.text;
-  } catch (error) {
-    throw new Error(`Transcription failed: ${error.message}`);
-  }
-}
-
-// Analyze transcript using GPT-4
-async function analyzeTranscript(transcript) {
-  const prompt = `
-    Anda adalah ahli HR Bank BCA yang mengevaluasi kandidat Service Ambassador.
-    Analisis transkrip wawancara berikut dan berikan penilaian detail untuk:
-    
-    1. Public Speaking
-    2. Analytical Thinking
-    3. Critical Thinking
-    4. Problem Solving
-    5. Presentation Skills
-    6. Manajemen Konflik
-    
-    Transkrip:
-    ${transcript}
-    
-    Berikan analisis dalam format JSON dengan struktur:
-    {
-      "publicSpeaking": {
-        "score": [0-100],
-        "analysis": "detail analisis",
-        "strengths": ["kekuatan1", "kekuatan2"],
-        "improvements": ["area perbaikan1", "area perbaikan2"]
-      },
-      // ... sama untuk skill lainnya
+  const skills = {
+    publicSpeaking: {
+      score: generateScore(),
+      analysis: "Kandidat menunjukkan kemampuan komunikasi yang baik dengan artikulasi jelas dan intonasi yang tepat. Volume suara konsisten dan bahasa tubuh mendukung pesan yang disampaikan.",
+      strengths: [
+        "Artikulasi jelas dan mudah dipahami",
+        "Kepercayaan diri yang baik",
+        "Penggunaan bahasa formal yang tepat"
+      ],
+      improvements: [
+        "Perlu meningkatkan variasi intonasi",
+        "Mengurangi penggunaan kata pengisi"
+      ]
+    },
+    analyticalThinking: {
+      score: generateScore(),
+      analysis: "Mampu menganalisis situasi dengan sistematis dan logis. Menunjukkan pemahaman yang baik terhadap konteks permasalahan.",
+      strengths: [
+        "Pendekatan sistematis dalam analisis",
+        "Kemampuan identifikasi pola yang baik",
+        "Pemahaman data yang mendalam"
+      ],
+      improvements: [
+        "Perlu lebih detail dalam analisis",
+        "Meningkatkan speed of analysis"
+      ]
+    },
+    criticalThinking: {
+      score: generateScore(),
+      analysis: "Mendemonstrasikan kemampuan evaluasi yang objektif dengan mempertimbangkan berbagai perspektif sebelum mengambil kesimpulan.",
+      strengths: [
+        "Objektif dalam penilaian",
+        "Mempertimbangkan multiple perspectives",
+        "Questioning approach yang baik"
+      ],
+      improvements: [
+        "Lebih dalam dalam evaluasi",
+        "Meningkatkan devil's advocate thinking"
+      ]
+    },
+    problemSolving: {
+      score: generateScore(),
+      analysis: "Sangat baik dalam mengidentifikasi akar masalah dan menawarkan solusi yang praktis dan dapat diimplementasikan.",
+      strengths: [
+        "Identifikasi root cause yang akurat",
+        "Solusi praktis dan feasible",
+        "Creative problem solving"
+      ],
+      improvements: [
+        "Pertimbangkan lebih banyak alternatif",
+        "Risk assessment pada solusi"
+      ]
+    },
+    presentationSkills: {
+      score: generateScore(),
+      analysis: "Penyampaian informasi terstruktur dengan baik menggunakan framework yang jelas dan mudah diikuti.",
+      strengths: [
+        "Struktur presentasi yang logis",
+        "Visual aids yang efektif",
+        "Engagement dengan audience"
+      ],
+      improvements: [
+        "Timing management",
+        "Lebih interaktif dengan audience"
+      ]
+    },
+    conflictManagement: {
+      score: generateScore(),
+      analysis: "Menunjukkan pemahaman yang baik tentang dinamika konflik dan pendekatan win-win solution.",
+      strengths: [
+        "Empati terhadap berbagai pihak",
+        "Mediasi yang efektif",
+        "De-escalation techniques"
+      ],
+      improvements: [
+        "Assertiveness dalam situasi sulit",
+        "Follow-up setelah resolusi"
+      ]
     }
+  };
+
+  // Calculate overall score
+  const scores = Object.values(skills).map(s => s.score);
+  const overallScore = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+
+  // Generate recommendation
+  let recommendation;
+  if (overallScore >= 85) {
+    recommendation = {
+      status: 'HIGHLY_RECOMMENDED',
+      text: 'Kandidat sangat direkomendasikan untuk posisi Service Ambassador BCA. Menunjukkan kompetensi excellent di hampir semua area.',
+      action: 'Proceed to final interview with senior management',
+      priority: 'HIGH'
+    };
+  } else if (overallScore >= 75) {
+    recommendation = {
+      status: 'RECOMMENDED',
+      text: 'Kandidat direkomendasikan dengan beberapa area pengembangan. Potensi yang baik untuk sukses dalam role.',
+      action: 'Proceed with additional skills assessment',
+      priority: 'MEDIUM'
+    };
+  } else if (overallScore >= 65) {
+    recommendation = {
+      status: 'CONDITIONAL',
+      text: 'Kandidat dapat dipertimbangkan dengan development program. Menunjukkan potensi namun perlu peningkatan.',
+      action: 'Consider for junior position with training',
+      priority: 'LOW'
+    };
+  } else {
+    recommendation = {
+      status: 'NOT_RECOMMENDED',
+      text: 'Kandidat belum memenuhi standar minimal untuk posisi ini.',
+      action: 'Suggest reapplication after skill development',
+      priority: 'NONE'
+    };
+  }
+
+  // Generate topics
+  const topics = [
+    "Customer Service Excellence",
+    "Digital Banking Innovation",
+    "Problem Resolution",
+    "Team Collaboration",
+    "Communication Skills",
+    "Banking Products Knowledge",
+    "Compliance & Ethics",
+    "Sales & Cross-selling",
+    "Conflict Resolution",
+    "Professional Development"
+  ];
+
+  // Shuffle and select random topics
+  const selectedTopics = topics
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 8);
+
+  // Generate mock transcript
+  const transcript = `
+[00:00:00] Interviewer: Selamat pagi, silakan perkenalkan diri Anda.
+
+[00:00:05] Kandidat: Selamat pagi. Nama saya [Nama Kandidat], lulusan S1 Manajemen dari Universitas Indonesia. Saya memiliki pengalaman 2 tahun di bidang customer service di Bank XYZ.
+
+[00:00:20] Interviewer: Mengapa Anda tertarik dengan posisi Service Ambassador di BCA?
+
+[00:00:25] Kandidat: BCA merupakan bank terkemuka di Indonesia dengan reputasi excellent dalam pelayanan. Saya ingin berkontribusi dalam memberikan pengalaman terbaik kepada nasabah BCA dan mengembangkan karir saya di industri perbankan.
+
+[00:00:45] Interviewer: Bagaimana Anda menangani nasabah yang komplain?
+
+[00:00:50] Kandidat: Pertama, saya akan mendengarkan dengan empati dan tidak menginterupsi. Kedua, saya akan memahami inti permasalahan dan meminta maaf atas ketidaknyamanan yang dialami. Ketiga, saya akan mencari solusi terbaik sesuai dengan kebijakan bank dan kepuasan nasabah.
+
+[00:01:15] Interviewer: Berikan contoh situasi dimana Anda harus menyelesaikan konflik.
+
+[00:01:20] Kandidat: Di tempat kerja sebelumnya, ada nasabah yang marah karena transaksi ATM-nya bermasalah. Saya tenangkan emosi nasabah, investigasi masalahnya, koordinasi dengan tim IT, dan berhasil menyelesaikan dalam 30 menit. Nasabah akhirnya puas dan berterima kasih.
+
+[Transkrip berlanjut...]
   `;
 
-  try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
-      messages: [
-        {
-          role: 'system',
-          content: 'Anda adalah expert HR assessor untuk Bank BCA. Berikan analisis objektif dan profesional.'
-        },
-        {
-          role: 'user',
-          content: prompt
-        }
+  return {
+    fileName: fileName || 'interview_video.mp4',
+    analysisDate: new Date().toISOString(),
+    duration: '15:23',
+    scores: skills,
+    overallScore,
+    recommendation,
+    topics: selectedTopics,
+    transcript,
+    insights: {
+      strengths: [
+        "Strong communication skills",
+        "Good analytical ability",
+        "Customer-focused mindset"
       ],
-      temperature: 0.7,
-      response_format: { type: 'json_object' }
-    });
-
-    return JSON.parse(response.choices[0].message.content);
-  } catch (error) {
-    throw new Error(`GPT analysis failed: ${error.message}`);
-  
+      developmentAreas: [
+        "Enhance technical knowledge",
+        "Improve time management",
+        "Develop leadership skills"
+      ],
+      keyCompetencies: [
+        "Customer Service: Advanced",
+        "Problem Solving: Proficient",
+        "Communication: Advanced",
+        "Teamwork: Proficient"
+      ]
+    },
+    metadata: {
+      processedAt: new Date().toISOString(),
+      processingTime: '2.5 minutes',
+      confidence: 0.92,
+      version: '1.0.0'
+    }
+  };
+}

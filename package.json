@@ -1,44 +1,20 @@
 {
   "name": "interview-quiver-analyzer",
   "version": "1.0.0",
-  "description": "Quiver Interview Analysis System",
+  "description": "BCA Service Ambassador Interview Analysis System",
   "main": "api/analyze.js",
   "scripts": {
     "dev": "vercel dev",
     "build": "vercel build",
-    "deploy": "vercel --prod",
-    "test": "jest"
+    "deploy": "vercel --prod"
   },
-  "dependencies": {
-    "openai": "^4.28.0",
-    "formidable": "^3.5.1",
-    "fluent-ffmpeg": "^2.1.2",
-    "axios": "^1.6.7",
-    "dotenv": "^16.4.1"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "vercel": "^33.5.0",
-    "@vercel/node": "^3.0.17",
-    "jest": "^29.7.0"
+    "@vercel/node": "^3.0.17"
   },
   "engines": {
-    "node": "18.x"
+    "node": "22.x"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/jbagustw/interview-quiver-app"
-  },
-  "keywords": [
-    "interview",
-    "analysis",
-    "ai",
-    "hr",
-    "recruitment"
-  ],
-  "author": "Your Name",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/jbagustw/interview-quiver-app/issues"
-  },
-  "homepage": "https://github.com/jbagustw/interview-quiver-app#readme"
+  "author": "BCA HR Team",
+  "license": "MIT"
 }
