@@ -1,7 +1,7 @@
 {
-  "name": "bca-interview-analyzer",
+  "name": "interview-quiver-analyzer",
   "version": "1.0.0",
-  "description": "BCA Service Ambassador Interview Analysis System",
+  "description": "Quiver Interview Analysis System",
   "main": "api/analyze.js",
   "scripts": {
     "dev": "vercel dev",
@@ -26,10 +26,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/bca-interview-analyzer"
+    "url": "git+https://github.com/jbagustw/interview-quiver-app"
   },
   "keywords": [
-    "bca",
     "interview",
     "analysis",
     "ai",
@@ -37,5 +36,9 @@
     "recruitment"
   ],
   "author": "Your Name",
-  "license": "MIT"
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jbagustw/interview-quiver-app/issues"
+  },
+  "homepage": "https://github.com/jbagustw/interview-quiver-app#readme"
 }
