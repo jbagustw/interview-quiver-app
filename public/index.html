@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BCA Service Ambassador - Interview Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #005BAA 0%, #003D7A 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .upload-section {
+            padding: 40px;
+            text-align: center;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .upload-box {
+            border: 3px dashed #005BAA;
+            border-radius: 15px;
+            padding: 60px 40px;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-box:hover {
+            background: #e8ebff;
+            transform: scale(1.02);
+        }
+
+        .upload-box.dragover {
+            background: #d0d7ff;
+            border-color: #003D7A;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: #005BAA;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #005BAA 0%, #003D7A 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,91,170,0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .processing {
+            display: none;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #005BAA;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            padding: 40px;
+        }
+
+        .candidate-info {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .skill-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .skill-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .skill-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .skill-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .skill-score {
+            font-size: 2em;
+            font-weight: bold;
+            color: #005BAA;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #005BAA 0%, #00A8E8 100%);
+            transition: width 1s ease;
+            border-radius: 10px;
+        }
+
+        .skill-details {
+            font-size: 0.9em;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .topic-cloud {
+            background: #f8f9ff;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .topic-cloud h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.5em;
+        }
+
+        .topics {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .topic-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1em;
+            animation: float 3s ease-in-out infinite;
+            box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+        }
+
+        .topic-bubble:nth-child(even) {
+            animation-delay: 1s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .transcript-section {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .transcript-content {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            line-height: 1.8;
+        }
+
+        .final-recommendation {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .final-recommendation h3 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+
+        .recommendation-score {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .recommendation-text {
+            font-size: 1.1em;
+            line-height: 1.6;
+        }
+
+        .export-section {
+            text-align: center;
+            padding: 20px;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .upload-section, .processing {
+                display: none;
+            }
+        }
+
+        .error-message {
+            background: #ff4444;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Interview Analysis</h1>
+            <p>Sistem Analisis Wawancara Kandidat</p>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-box" id="uploadBox">
+                <div class="upload-icon">📹</div>
+                <h2>Upload Video Wawancara</h2>
+                <p>Drag & drop video atau klik untuk memilih file</p>
+                <p style="margin-top: 10px; font-size: 0.9em; opacity: 0.7;">
+                    Format: MP4, AVI, MOV, WebM (Max: 500MB)
+                </p>
+                <input type="file" id="videoInput" accept="video/*">
+            </div>
+            <button class="btn" id="analyzeBtn" style="display: none;" disabled>
+                🔍 Mulai Analisis
+            </button>
+        </div>
+
+        <div class="processing" id="processingSection">
+            <div class="spinner"></div>
+            <h2>Sedang Memproses...</h2>
+            <p id="processStatus">Mengekstrak audio dari video...</p>
+            <div style="margin-top: 20px;">
+                <small>Proses ini membutuhkan waktu 2-5 menit</small>
+            </div>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="results" id="resultsSection">
+            <div class="candidate-info">
+                <h2>📋 Informasi Kandidat</h2>
+                <p><strong>Nama File:</strong> <span id="fileName"></span></p>
+                <p><strong>Tanggal Analisis:</strong> <span id="analysisDate"></span></p>
+                <p><strong>Durasi Video:</strong> <span id="videoDuration"></span></p>
+            </div>
+
+            <h2 style="margin-bottom: 20px;">📊 Hasil Penilaian Kompetensi</h2>
+            
+            <div class="skills-grid">
+                <div class="skill-card">
+                    <div class="skill-header">
+                        <span class="skill-name">🎤 Public Speaking</span>
+                        <span class="skill-score" id="publicSpeakingScore">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="publicSpeakingProgress"></div>
+                    </div>
+                    <div class="skill-details" id="publicSpeakingDetails">
+                        Menilai kemampuan berbicara di depan umum, kejelasan artikulasi, dan kepercayaan diri.
+                    </div>
+                </div>
+
+                <div class="skill-card">
+                    <div class="skill-header">
+                        <span class="skill-name">🧠 Analytical Thinking</span>
+                        <span class="skill-score" id="analyticalScore">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="analyticalProgress"></div>
+                    </div>
+                    <div class="skill-details" id="analyticalDetails">
+                        Kemampuan menganalisis situasi dan data secara sistematis.
+                    </div>
+                </div>
+
+                <div class="skill-card">
+                    <div class="skill-header">
+                        <span class="skill-name">💡 Critical Thinking</span>
+                        <span class="skill-score" id="criticalScore">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="criticalProgress"></div>
+                    </div>
+                    <div class="skill-details" id="criticalDetails">
+                        Kemampuan berpikir kritis dan evaluasi objektif.
+                    </div>
+                </div>
+
+                <div class="skill-card">
+                    <div class="skill-header">
+                        <span class="skill-name">🎯 Problem Solving</span>
+                        <span class="skill-score" id="solutionScore">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="solutionProgress"></div>
+                    </div>
+                    <div class="skill-details" id="solutionDetails">
+                        Kemampuan menemukan solusi efektif untuk masalah.
+                    </div>
+                </div>
+
+                <div class="skill-card">
+                    <div class="skill-header">
+                        <span class="skill-name">📊 Presentation Skill</span>
+                        <span class="skill-score" id="presentationScore">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="presentationProgress"></div>
+                    </div>
+                    <div class="skill-details" id="presentationDetails">
+                        Kemampuan menyampaikan informasi secara terstruktur.
+                    </div>
+                </div>
+
+                <div class="skill-card">
+                    <div class="skill-header">
+                        <span class="skill-name">🤝 Manajemen Konflik</span>
+                        <span class="skill-score" id="conflictScore">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="conflictProgress"></div>
+                    </div>
+                    <div class="skill-details" id="conflictDetails">
+                        Kemampuan mengelola dan menyelesaikan konflik.
+                    </div>
+                </div>
+            </div>
+
+            <div class="topic-cloud">
+                <h3>☁️ Topik Utama Pembahasan</h3>
+                <div class="topics" id="topicBubbles">
+                    <!-- Topic bubbles will be inserted here -->
+                </div>
+            </div>
+
+            <div class="transcript-section">
+                <h3>📝 Transkrip Wawancara</h3>
+                <div class="transcript-content" id="transcriptContent">
+                    <!-- Transcript will be inserted here -->
+                </div>
+            </div>
+
+            <div class="final-recommendation">
+                <h3>✅ Rekomendasi Akhir</h3>
+                <div class="recommendation-score" id="finalScore">0%</div>
+                <div class="recommendation-text" id="recommendationText">
+                    <!-- Recommendation will be inserted here -->
+                </div>
+            </div>
+
+            <div class="export-section">
+                <button class="btn" onclick="exportResults()">
+                    📥 Export Hasil (PDF)
+                </button>
+                <button class="btn" onclick="printResults()">
+                    🖨️ Cetak Laporan
+                </button>
+                <button class="btn" onclick="resetAnalysis()">
+                    🔄 Analisis Baru
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Upload handling
+        const uploadBox = document.getElementById('uploadBox');
+        const videoInput = document.getElementById('videoInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        let selectedFile = null;
+
+        uploadBox.addEventListener('click', () => {
+            videoInput.click();
+        });
+
+        uploadBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadBox.classList.add('dragover');
+        });
+
+        uploadBox.addEventListener('dragleave', () => {
+            uploadBox.classList.remove('dragover');
+        });
+
+        uploadBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadBox.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('video/')) {
+                handleFileSelect(files[0]);
+            }
+        });
+
+        videoInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        function handleFileSelect(file) {
+            if (file.size > 500 * 1024 * 1024) {
+                showError('File terlalu besar. Maksimal 500MB.');
+                return;
+            }
+            
+            selectedFile = file;
+            uploadBox.innerHTML = `
+                <div class="upload-icon">✅</div>
+                <h2>${file.name}</h2>
+                <p>Ukuran: ${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                <p style="margin-top: 10px; color: green;">File siap untuk dianalisis</p>
+            `;
+            analyzeBtn.style.display = 'inline-block';
+            analyzeBtn.disabled = false;
+        }
+
+        analyzeBtn.addEventListener('click', startAnalysis);
+
+        async function startAnalysis() {
+            if (!selectedFile) return;
+
+            // Show processing section
+            document.getElementById('processingSection').style.display = 'block';
+            document.querySelector('.upload-section').style.display = 'none';
+            
+            // Simulate analysis process
+            const statuses = [
+                'Mengekstrak audio dari video...',
+                'Melakukan transkripsi audio...',
+                'Menganalisis konten wawancara...',
+                'Menilai kompetensi Public Speaking...',
+                'Menilai Problem Solving Skills...',
+                'Menilai Manajemen Konflik...',
+                'Membuat visualisasi hasil...',
+                'Menyiapkan laporan akhir...'
+            ];
+
+            for (let i = 0; i < statuses.length; i++) {
+                document.getElementById('processStatus').textContent = statuses[i];
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+
+            // Generate mock results
+            showResults();
+        }
+
+        function showResults() {
+            document.getElementById('processingSection').style.display = 'none';
+            document.getElementById('resultsSection').style.display = 'block';
+
+            // Set candidate info
+            document.getElementById('fileName').textContent = selectedFile.name;
+            document.getElementById('analysisDate').textContent = new Date().toLocaleDateString('id-ID');
+            document.getElementById('videoDuration').textContent = '15:23 menit';
+
+            // Generate random scores for demo
+            const skills = [
+                { id: 'publicSpeaking', score: 85, detail: 'Kandidat menunjukkan artikulasi yang jelas, volume suara konsisten, dan kepercayaan diri yang baik. Penggunaan bahasa formal dan sopan sesuai standar BCA.' },
+                { id: 'analytical', score: 78, detail: 'Mampu menguraikan masalah dengan sistematis. Menunjukkan pemahaman yang baik terhadap data dan fakta yang disajikan.' },
+                { id: 'critical', score: 82, detail: 'Mendemonstrasikan kemampuan evaluasi yang objektif. Mampu melihat berbagai perspektif dalam situasi yang kompleks.' },
+                { id: 'solution', score: 88, detail: 'Sangat baik dalam mengidentifikasi akar masalah dan menawarkan solusi praktis. Pendekatan problem solving terstruktur.' },
+                { id: 'presentation', score: 90, detail: 'Penyampaian informasi sangat terstruktur dengan alur yang logis. Penggunaan contoh relevan dan mudah dipahami.' },
+                { id: 'conflict', score: 75, detail: 'Menunjukkan pemahaman dasar tentang manajemen konflik. Perlu peningkatan dalam teknik mediasi dan negosiasi.' }
+            ];
+
+            let totalScore = 0;
+            skills.forEach(skill => {
+                document.getElementById(skill.id + 'Score').textContent = skill.score + '%';
+                document.getElementById(skill.id + 'Progress').style.width = skill.score + '%';
+                document.getElementById(skill.id + 'Details').textContent = skill.detail;
+                totalScore += skill.score;
+            });
+
+            // Calculate final score
+            const finalScore = Math.round(totalScore / skills.length);
+            document.getElementById('finalScore').textContent = finalScore + '%';
+
+            // Set recommendation
+            let recommendation = '';
+            if (finalScore >= 85) {
+                recommendation = 'SANGAT DIREKOMENDASIKAN. Kandidat menunjukkan kompetensi yang sangat baik dan siap untuk posisi Service Ambassador BCA.';
+            } else if (finalScore >= 75) {
+                recommendation = 'DIREKOMENDASIKAN dengan catatan. Kandidat memiliki potensi yang baik, disarankan untuk mengikuti training tambahan pada area yang perlu ditingkatkan.';
+            } else if (finalScore >= 65) {
+                recommendation = 'DIPERTIMBANGKAN. Kandidat menunjukkan potensi namun memerlukan pengembangan lebih lanjut sebelum siap untuk posisi ini.';
+            } else {
+                recommendation = 'BELUM DIREKOMENDASIKAN. Kandidat perlu meningkatkan beberapa kompetensi kunci sebelum dapat dipertimbangkan untuk posisi ini.';
+            }
+            document.getElementById('recommendationText').textContent = recommendation;
+
+            // Add topic bubbles
+            const topics = [
+                'Customer Service Excellence',
+                'Komunikasi Efektif',
+                'Problem Solving',
+                'Kerja Tim',
+                'Orientasi Pelanggan',
+                'Inovasi Layanan',
+                'Etika Profesional',
+                'Digital Banking'
+            ];
+
+            const topicBubbles = document.getElementById('topicBubbles');
+            topicBubbles.innerHTML = '';
+            topics.forEach(topic => {
+                const bubble = document.createElement('div');
+                bubble.className = 'topic-bubble';
+                bubble.textContent = topic;
+                topicBubbles.appendChild(bubble);
+            });
+
+            // Add sample transcript
+            document.getElementById('transcriptContent').innerHTML = `
+                <p><strong>Pewawancara:</strong> Selamat pagi, bisa perkenalkan diri Anda?</p>
+                <p><strong>Kandidat:</strong> Selamat pagi. Nama saya [Nama Kandidat], saya lulusan [Universitas] jurusan [Jurusan]. Saya tertarik dengan posisi Service Ambassador BCA karena...</p>
+                <p><strong>Pewawancara:</strong> Bagaimana Anda menangani customer yang komplain?</p>
+                <p><strong>Kandidat:</strong> Saya akan mendengarkan dengan empati, memahami masalah mereka, dan mencari solusi terbaik...</p>
+                <p style="text-align: center; margin-top: 20px; opacity: 0.7;">[Transkrip lengkap tersedia setelah analisis selesai]</p>
+            `;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function exportResults() {
+            alert('Fitur export PDF akan tersedia setelah integrasi dengan backend API');
+        }
+
+        function printResults() {
+            window.print();
+        }
+
+        function resetAnalysis() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>

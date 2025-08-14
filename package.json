@@ -1,0 +1,41 @@
+{
+  "name": "bca-interview-analyzer",
+  "version": "1.0.0",
+  "description": "BCA Service Ambassador Interview Analysis System",
+  "main": "api/analyze.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "deploy": "vercel --prod",
+    "test": "jest"
+  },
+  "dependencies": {
+    "openai": "^4.28.0",
+    "formidable": "^3.5.1",
+    "fluent-ffmpeg": "^2.1.2",
+    "axios": "^1.6.7",
+    "dotenv": "^16.4.1"
+  },
+  "devDependencies": {
+    "vercel": "^33.5.0",
+    "@vercel/node": "^3.0.17",
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": "18.x"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/bca-interview-analyzer"
+  },
+  "keywords": [
+    "bca",
+    "interview",
+    "analysis",
+    "ai",
+    "hr",
+    "recruitment"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
